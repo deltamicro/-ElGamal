@@ -1,0 +1,88 @@
+#!/bin/bash
+#comprobador de que $p es mayor que 1
+echo "dame un numero primo P"
+read p
+	if [ $p -le 1 ]
+	then 
+		echo "el numero $p no es primo ni compuesto"
+		exit
+	fi
+#comprobador que $p es primo
+factores=$( factor $p | wc -w )
+	if [ $factores -eq 2 ]
+	then
+		echo "dame un numero generador G, <p y >1"
+	else
+		echo "el numero $p no es primo, intentalo de nuevo"
+		exit
+	fi
+#comprobador de que g < p y no menor a 1
+read g
+	if [ $g -ge $p -o $g -le 1 ]
+	then 	
+		echo "el numero P no cumple con las caracteristicas"
+		exit
+	fi
+#llave privada x menor que P
+echo "dame tu llave privada X , <P y >1  "
+read x
+	if [ $x -ge $p -o $x -le 1 ]
+	then
+		echo "el numero X no cumple con las caracteristicas"
+		exit
+	fi
+echo "-------------------------------------------------------"
+###############################convertidor de int a bin para multiplicacion modular MAXIMO 65,536 
+d2b=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
+bin=$((10#${d2b[$x]}))
+echo "el numero binario es $bin"
+len=${#bin}
+echo " la longitud es $len"
+#len se usa para contadores despues en los arreglos, se hace con otro metodo # pero es lo mismo que exp
+exp=$( echo $bin | wc -m )
+exp=$(( $exp-1 ))
+echo $exp
+#exp se usa para los contadores de exponenciacion, es igual que len pero con otro metodo:wc word count
+
+##############################exponenciacion y modulos
+gexp=$g
+gexp=$(( $gexp%$p ))
+#el indice 0 de arrint (arrangement integer) es igual al primer exponente de g (gexp)
+arrint[0]=$gexp
+echo "arrint     0:$gexp"
+cont=1
+until [ $exp == 1 ]
+        do
+                gexp=$(( $gexp**2 ))
+                gexp=$(( $gexp%$p ))
+		arrint[$cont]=$gexp
+		printf "arrint %4d:%s\n" $cont ${arrint[$cont]} 
+                exp=$(( exp-1 ))
+		cont=$(( cont+1 ))
+        done
+echo "-----------------------------------------------------------------------"
+
+########################### eleccion de binarios y multiplicacion de enteros
+res=1 ##resultado y contador de multiplicaciones, inicializamos la multiplicacion en 1 para no multiplicar por 0
+contbin=0 ## inicializamos el indice del arreglo arrbin (valores binarios) 
+for ((lng=len-1;lng>=0;lng--)) ##barremos el arreglo de derecha a izquierda
+## // del total de la longitud (len) del numero binario hacia cero , cero tambien se barre
+do
+        arrbin[$contbin]=${bin:$lng:1} ##aqui se invierte el binario/
+	# y asignamos al indice contbin ,lo que haya en la posicion lng (longitud en contador del binario) un caracter a la vez
+	printf "arrbin %4d:%s\n" $contbin ${arrbin[$contbin]}
+	if [ ${arrbin[$contbin]} -eq 1 ] ## checamos si el contenido de arr en la posicion de cont2 es igual a 1
+        then
+	        echo "realiza multiplicacion de $res por ${arrint[$contbin]}"
+		res=$(( $res*${arrint[$contbin]} )) ##acumula la multiplicacion existente de res por el numero valido siguiente de exponentes
+		echo " resultado parcial $res"
+        fi
+	contbin=$(( contbin+1 )) ##incrementa el indice del arrbin (enteros) // para barrer arrbin de izquierda a derecha
+done
+resultado=$(( $res%$p ))
+echo "#################################################"
+echo "el resultado es $resultado"
+
+
+
+
